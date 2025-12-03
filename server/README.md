@@ -64,8 +64,16 @@ Install & run
 1) Prerequisites
 
 Node 18+ (ESM compatible)
+-> npm install
 
 Postgres running locally or in the cloud
+-> sudo apt install postgresql postgresql-contrib
+-> sudo passwd [password] to update system-password
+-> sudo service postgresql start, to start db-server
+-> sudo -u postgres psql, to enter the db-client
+-> CREATE DATABASE [name];, to create db
+-> \c [name], to connect
+-> ALTER USER postgres PASSWORD '[password]';, to set db-password
 
 2) Clone & install
 
