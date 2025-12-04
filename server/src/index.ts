@@ -33,15 +33,16 @@ app.use(middlewareLogResponses); // wenn Statuscode nicht 200, dann wird Statusc
 app.get("/api/healthz", handlerReadiness); // Server antwortet mit "OK" wenn er läuft
 // app.get("/admin/metrics", handlerMetrics); // ALT sendet anzahl der seitenaufrufe
 app.put("/api/users", handlerUpdateUser);
-app.post("/api/users", handlerCreateUser);
-app.post("/api/login", handlerLogin);
+app.post("/api/users", handlerCreateUser); // legt User in db an. braucht email/name und passwort welches hier gehashed wird
+app.post("/api/login", handlerLogin); // vergleicht email/name und passwort mit db, erstellt jwtToken und refreshToken, speichert in db und gibt token zurück
+// passwort-hashing sollte von bcrypt auf argon2 umgestellt werden
 app.post("/api/refresh", handlerRefresh);
 app.post("/api/revoke", handlerRevoke);
-app.post("/admin/reset", handlerReset);  // 
-app.post("/api/chirps", handlerCreateChirp);
+app.post("/admin/reset", handlerReset);  // löscht user-db, wenn man "dev" ist (config.platform)
+// app.post("/api/chirps", handlerCreateChirp); // neuen chirp nach richtlinien in db eintragen
 app.post("/api/polka/webhooks", handlerPolkaWebhooks);
-app.get("/api/chirps", handlerListChirps);
-app.get("/api/chirps/:chirpID", handlerGetChirp);
+// app.get("/api/chirps", handlerListChirps); // Listet alle chirps
+// app.get("/api/chirps/:chirpID", handlerGetChirp); // Listet den Chirp mit der chirpID
 app.delete("/api/chirps/:chirpID", handlerDeleteChirp);
 app.use(errorHandler); // Errors müssen als letztes behandelt werden
 

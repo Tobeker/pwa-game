@@ -165,7 +165,7 @@ export async function handlerLogin(req: Request, res: Response, next: NextFuncti
     const token = makeJWT(user.id, exp, config.api.jwtSecret);
 
     const refreshToken = makeRefreshToken();
-    const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000); // days*hours*min*sec*ms -> 60 days
     await insertRefreshToken({ token: refreshToken, userId: user.id, expiresAt});
 
     const { hashedPassword: _hp, ...publicUser } = user;

@@ -86,17 +86,17 @@ npm install
 Create a .env file in the project root:
 
 # App/platform
-PLATFORM=dev
+PLATFORM="dev"
 
 # JWT signing secret (generate a long random string)
 # e.g. openssl rand -base64 64
-JWT_SECRET=replace-with-a-long-random-string
+JWT_SECRET="replace-with-a-long-random-string"
 
 # Database connection (adapt to your setup)
 # Examples:
-# DATABASE_URL=postgres://user:password@localhost:5432/chirpy
+# DATABASE_URL=postgres://user:password@localhost:5432/dbname
 # or individual PG* vars if your db bootstrap expects them
-DATABASE_URL=postgres://user:password@localhost:5432/chirpy
+DATABASE_URL=postgres://[user]:[password]@localhost:5432/[db-name]?sslmode=disable
 
 This project loads env via dotenv and reads values in src/config.ts.
 
