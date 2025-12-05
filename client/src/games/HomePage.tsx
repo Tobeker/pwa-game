@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 
 type HealthStatus = 'loading' | 'ok' | 'error'
 type AuthStatus = 'idle' | 'loading' | 'success' | 'error'
+type CreateStatus = 'idle' | 'loading' | 'success' | 'error'
 
 type LoginResponse = {
   id: string
@@ -19,6 +20,8 @@ function HomePage() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [authMessage, setAuthMessage] = useState<string>('')
   const [tokens, setTokens] = useState<{ token: string; refreshToken: string } | null>(null)
+  const [createStatus, setCreateStatus] = useState<CreateStatus>('idle')
+  const [createMessage, setCreateMessage] = useState<string>('')
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -75,12 +78,73 @@ function HomePage() {
     }
   }
 
+  async function handleCreateUser(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setCreateStatus('loading')
+    setCreateMessage('')
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = (await res.json()) as { email?: string; id?: string; error?: string }
+      if (!res.ok || !data.id) {
+        throw new Error(data.error || 'Registrierung fehlgeschlagen')
+      }
+      setCreateStatus('success')
+      setCreateMessage(`Benutzer angelegt: ${data.email}`)
+    } catch (err) {
+      setCreateStatus('error')
+      setCreateMessage(err instanceof Error ? err.message : 'Unbekannter Fehler')
+    }
+  }
+
   return (
     <div>
       <h1>Willkommen auf der Startseite</h1>
       <p>Das ist deine erste Seite mit React + Vite + TypeScript.</p>
 
-      <section style={{ marginTop: '1.5rem' }}>
+      <section style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
+        <div>
+          <h3>Neuen User erstellen</h3>
+          <form onSubmit={handleCreateUser} style={{ display: 'grid', gap: '0.5rem', maxWidth: 360 }}>
+            <label style={{ display: 'grid', gap: '0.25rem' }}>
+              <span>Email</span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="name@example.com"
+              />
+            </label>
+            <label style={{ display: 'grid', gap: '0.25rem' }}>
+              <span>Passwort</span>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                placeholder="••••••••"
+              />
+            </label>
+            <button type="submit" disabled={createStatus === 'loading'}>
+              {createStatus === 'loading' ? 'Wird erstellt...' : 'User anlegen'}
+            </button>
+          </form>
+          {createStatus === 'success' && (
+            <p style={{ marginTop: '0.5rem', color: 'green' }}>✅ {createMessage || 'User erstellt'}</p>
+          )}
+          {createStatus === 'error' && (
+            <p style={{ marginTop: '0.5rem', color: 'red' }}>❌ {createMessage || 'Registrierung fehlgeschlagen'}</p>
+          )}
+        </div>
+
         <h3>Login</h3>
         <form onSubmit={handleLogin} style={{ display: 'grid', gap: '0.5rem', maxWidth: 360 }}>
           <label style={{ display: 'grid', gap: '0.25rem' }}>
