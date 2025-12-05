@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
+import { useAuth, type AuthData } from '../auth'
 
 type HealthStatus = 'loading' | 'ok' | 'error'
 type AuthStatus = 'idle' | 'loading' | 'success' | 'error'
@@ -6,7 +7,7 @@ type CreateStatus = 'idle' | 'loading' | 'success' | 'error'
 
 type LoginResponse = {
   id: string
-  email: string
+  email: string // server expects/returns email, we treat it as username
   createdAt?: string
   token: string
   refreshToken: string
@@ -15,13 +16,14 @@ type LoginResponse = {
 function HomePage() {
   const [health, setHealth] = useState<HealthStatus>('loading')
   const [healthMessage, setHealthMessage] = useState<string>('')
-  const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [authStatus, setAuthStatus] = useState<AuthStatus>('idle')
   const [authMessage, setAuthMessage] = useState<string>('')
   const [tokens, setTokens] = useState<{ token: string; refreshToken: string } | null>(null)
   const [createStatus, setCreateStatus] = useState<CreateStatus>('idle')
   const [createMessage, setCreateMessage] = useState<string>('')
+  const { auth, setAuth } = useAuth()
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -56,7 +58,7 @@ function HomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: name, password }),
       })
 
       const data = (await res.json()) as Partial<LoginResponse> & { error?: string }
@@ -68,10 +70,8 @@ function HomePage() {
       setAuthMessage('Erfolgreich eingeloggt')
       const tokenPair = { token: data.token, refreshToken: data.refreshToken }
       setTokens(tokenPair)
-      localStorage.setItem(
-        'auth',
-        JSON.stringify({ ...tokenPair, email: data.email, userId: data.id, createdAt: data.createdAt }),
-      )
+      const authData: AuthData = { ...tokenPair, name: data.email, userId: data.id, createdAt: data.createdAt }
+      setAuth(authData)
     } catch (err) {
       setAuthStatus('error')
       setAuthMessage(err instanceof Error ? err.message : 'Unbekannter Fehler')
@@ -88,9 +88,14 @@ function HomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: name, password }),
       })
       const data = (await res.json()) as { email?: string; id?: string; error?: string }
+      if (res.status === 200 && data.email) {
+        setCreateStatus('error')
+        setCreateMessage(`Nutzername bereits vergeben: ${data.email}`)
+        return
+      }
       if (!res.ok || !data.id) {
         throw new Error(data.error || 'Registrierung fehlgeschlagen')
       }
@@ -108,18 +113,27 @@ function HomePage() {
       <p>Das ist deine erste Seite mit React + Vite + TypeScript.</p>
 
       <section style={{ marginTop: '1.5rem', display: 'grid', gap: '1.5rem' }}>
+        {(auth?.name || auth?.email) && (
+          <div style={{ padding: '0.75rem', border: '1px solid #ccc', borderRadius: 4, background: '#f8f8f8' }}>
+            <strong>Eingeloggt als {auth.name ?? auth.email}</strong>
+            <div style={{ marginTop: '0.25rem', fontSize: '0.9rem', color: '#555' }}>
+              Du kannst jetzt zur Seite Schach wechseln.
+            </div>
+          </div>
+        )}
+
         <div>
           <h3>Neuen User erstellen</h3>
           <form onSubmit={handleCreateUser} style={{ display: 'grid', gap: '0.5rem', maxWidth: 360 }}>
             <label style={{ display: 'grid', gap: '0.25rem' }}>
-              <span>Email</span>
+              <span>Name</span>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
-                autoComplete="email"
-                placeholder="name@example.com"
+                autoComplete="username"
+                placeholder="Dein Name"
               />
             </label>
             <label style={{ display: 'grid', gap: '0.25rem' }}>
@@ -145,22 +159,22 @@ function HomePage() {
           )}
         </div>
 
-        <h3>Login</h3>
-        <form onSubmit={handleLogin} style={{ display: 'grid', gap: '0.5rem', maxWidth: 360 }}>
-          <label style={{ display: 'grid', gap: '0.25rem' }}>
-            <span>Email</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              placeholder="name@example.com"
-            />
-          </label>
-          <label style={{ display: 'grid', gap: '0.25rem' }}>
-            <span>Passwort</span>
-            <input
+          <h3>Login</h3>
+          <form onSubmit={handleLogin} style={{ display: 'grid', gap: '0.5rem', maxWidth: 360 }}>
+            <label style={{ display: 'grid', gap: '0.25rem' }}>
+              <span>Name</span>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                autoComplete="username"
+                placeholder="Dein Name"
+              />
+            </label>
+            <label style={{ display: 'grid', gap: '0.25rem' }}>
+              <span>Passwort</span>
+              <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
