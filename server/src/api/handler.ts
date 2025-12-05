@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import { config } from "../config.js";
-import { hashPassword, checkPasswordHash, makeJWT, getBearerToken, validateJWT, makeRefreshToken, getAPIKey } from "./auth.js";
+import { hashPassword, checkPasswordHash, makeJWT, getBearerToken, validateJWT, makeRefreshToken/*, getAPIKey*/ } from "./auth.js";
 import { BadRequestError, ForbiddenError, UnauthorizedError } from "./errors.js";
 import { insertRefreshToken, findRefreshTokenWithUser, revokeRefreshToken } from "../db/queries/refreshTokens.js";
 import { createUser, getUserByEmail, deleteAllUsers, updateUserCredentials, upgradeUserToChirpyRed } from "../db/queries/users.js";
-import { createChirp, listChirpsAscending, getChirpById, deleteChirpOwnedByUser} from "../db/queries/chirps.js";
+//import { createChirp, listChirpsAscending, getChirpById, deleteChirpOwnedByUser} from "../db/queries/chirps.js";
 
 function requireEmailAndPassword(req: Request) {
   const email = req.body?.email;
@@ -18,7 +18,7 @@ function requireEmailAndPassword(req: Request) {
   return { email: email.trim().toLowerCase(), password };
 }
 
-export function handlerMetrics(req: Request, res: Response) {
+/*export function handlerMetrics(req: Request, res: Response) {
     const html = `<!doctype html>
 <html>
   <body>
@@ -27,7 +27,7 @@ export function handlerMetrics(req: Request, res: Response) {
   </body>
 </html>`;
   res.set("Content-Type", "text/html; charset=utf-8").send(html);
-}
+}*/
 
 export async function handlerReset(_req: Request, res: Response, next: NextFunction) {
   try {
@@ -41,7 +41,7 @@ export async function handlerReset(_req: Request, res: Response, next: NextFunct
   }
 }
 
-export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
+/*export async function handlerCreateChirp(req: Request, res: Response, next: NextFunction) {
   
   try {
     const token = getBearerToken(req);
@@ -82,7 +82,7 @@ export async function handlerCreateChirp(req: Request, res: Response, next: Next
     return next(err);
   }
   
-}
+}*/
 
 export async function handlerCreateUser(req: Request, res: Response, next: NextFunction) {
   try {
@@ -103,7 +103,7 @@ export async function handlerCreateUser(req: Request, res: Response, next: NextF
   }
 }
 
-export async function handlerListChirps(req: Request, res: Response, next: NextFunction) {
+/*export async function handlerListChirps(req: Request, res: Response, next: NextFunction) {
   try {
     const chirps = await listChirpsAscending();
 
@@ -127,9 +127,9 @@ export async function handlerListChirps(req: Request, res: Response, next: NextF
   } catch (err) {
     next(err);
   }
-}
+}*/
 
-export async function handlerGetChirp(req: Request, res: Response, next: NextFunction) {
+/*export async function handlerGetChirp(req: Request, res: Response, next: NextFunction) {
   try {
     const id = String(req.params.chirpID);
     if (!id) {
@@ -145,7 +145,7 @@ export async function handlerGetChirp(req: Request, res: Response, next: NextFun
   } catch (err) {
     next(err);
   }
-}
+}*/
 
 export async function handlerLogin(req: Request, res: Response, next: NextFunction) {
   try {
@@ -229,7 +229,7 @@ export async function handlerUpdateUser(req: Request, res: Response, next: NextF
   }
 }
 
-export async function handlerDeleteChirp(req: Request, res: Response, next: NextFunction) {
+/*export async function handlerDeleteChirp(req: Request, res: Response, next: NextFunction) {
   try {
     // Auth
     const token = getBearerToken(req);                 // throws 401 if missing/malformed
@@ -250,9 +250,17 @@ export async function handlerDeleteChirp(req: Request, res: Response, next: Next
   } catch (err) {
     next(err);
   }
-}
+}*/
 
-export async function handlerPolkaWebhooks(req: Request, res: Response, next: NextFunction) {
+/*export async function handlerPolkaWebhooks(req: Request, res: Response, next: NextFunction) {
+  
+  //{
+  //  event: string;
+  //  data: {
+  //    userId: string;
+  //  };
+  //};
+  
   try {
     const event = req.body?.event;
     if (event !== "user.upgraded") {
@@ -276,4 +284,4 @@ export async function handlerPolkaWebhooks(req: Request, res: Response, next: Ne
   } catch (err) {
     next(err);
   }
-}
+}*/

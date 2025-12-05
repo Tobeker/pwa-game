@@ -53,10 +53,10 @@ export function makeRefreshToken(): string {
   return randomBytes(32).toString("hex"); // 64-char hex
 }
 
-export function getAPIKey(req: Request): string {
+/*export function getAPIKey(req: Request): string {
     const header = req.get("authorization");
     if (!header) throw new UnauthorizedError("Missing Authorization header");
     const match = header.match(/^ApiKey\s+(.+)$/i);
     if (!match) throw new UnauthorizedError("Invalid Authorization header");
     return match[1].trim();
-}
+}*/

@@ -12,11 +12,11 @@ export function middlewareLogResponses(req: Request, res: Response, next: NextFu
     next();
 }
 
-export function middlewareMetricsInc(req: Request, res: Response, next: NextFunction) {
+/*export function middlewareMetricsInc(req: Request, res: Response, next: NextFunction) {
     
     res.on("finish", () => {
         config.api.fileserverHits+=1;
     });
 
     next();
-}
+}*/
