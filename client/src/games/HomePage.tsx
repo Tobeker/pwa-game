@@ -91,9 +91,10 @@ function HomePage() {
         body: JSON.stringify({ email: name, password }),
       })
       const data = (await res.json()) as { email?: string; id?: string; error?: string }
-      if (res.status === 200 && data.email) {
+      if (res.status === 409 || res.status === 201) {
         setCreateStatus('error')
-        setCreateMessage(`Nutzername bereits vergeben: ${data.email}`)
+        const taken = data.email ? `: ${data.email}` : ''
+        setCreateMessage(data.error || `Nutzername bereits vergeben${taken}`)
         return
       }
       if (!res.ok || !data.id) {

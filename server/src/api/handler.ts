@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { config } from "../config.js";
 import { hashPassword, checkPasswordHash, makeJWT, getBearerToken, validateJWT, makeRefreshToken/*, getAPIKey*/ } from "./auth.js";
-import { BadRequestError, ForbiddenError, UnauthorizedError } from "./errors.js";
+import { BadRequestError, ForbiddenError, UnauthorizedError, ConflictError } from "./errors.js";
 import { insertRefreshToken, findRefreshTokenWithUser, revokeRefreshToken } from "../db/queries/refreshTokens.js";
 import { createUser, getUserByEmail, deleteAllUsers, updateUserCredentials, upgradeUserToChirpyRed } from "../db/queries/users.js";
 //import { createChirp, listChirpsAscending, getChirpById, deleteChirpOwnedByUser} from "../db/queries/chirps.js";
@@ -89,15 +89,18 @@ export async function handlerCreateUser(req: Request, res: Response, next: NextF
     const { email, password } = requireEmailAndPassword(req);
     const hashed = await hashPassword(password);
 
-    let user = await createUser({ email, hashedPassword: hashed });
-    if (!user) {
-      user = await getUserByEmail(email);
+    const existing = await getUserByEmail(email);
+    if (existing) {
+      throw new ConflictError("Nutzername bereits vergeben");
     }
 
-    if (!user) throw new Error("Failed to create or fetch user");
+    const user = await createUser({ email, hashedPassword: hashed });
+    if (!user) {
+      throw new ConflictError("Nutzername bereits vergeben");
+    }
 
     const { hashedPassword: _hp, ...publicUser } = user;
-    res.status(user.createdAt instanceof Date ? 201 : 200).json(publicUser);
+    res.status(201).json(publicUser);
   } catch (err) {
     next(err);
   }
