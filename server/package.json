@@ -18,12 +18,13 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.31.8",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "chess.js": "^1.4.0",
     "drizzle-orm": "^0.44.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
