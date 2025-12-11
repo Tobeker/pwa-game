@@ -1,4 +1,4 @@
-import { pgTable, timestamp, varchar, uuid, boolean } from "drizzle-orm/pg-core";
+import { pgTable, timestamp, varchar, uuid, boolean, json, text } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -33,9 +33,27 @@ export const refreshTokens = pgTable("refresh_tokens", {
   revokedAt: timestamp("revoked_at"),
 });
 
+export const chess = pgTable("chess", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
+  fen: varchar("fen", { length: 256 }).notNull(),
+  status: varchar("status", { length: 64 }).notNull(),
+  turn: varchar("turn", { length: 2 }).notNull(),
+  opponentType: varchar("opponent_type", { length: 16 }).notNull(),
+  playerColor: varchar("player_color", { length: 8 }).notNull(),
+  players: json().notNull(),
+  moves: text("moves").array().notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type NewRefreshToken = typeof refreshTokens.$inferInsert;
 export type NewUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type NewChess = typeof chess.$inferInsert;
+export type Chess = typeof chess.$inferSelect;
 //export type NewChirp = typeof chirps.$inferInsert;
 //export type Chirp = typeof chirps.$inferSelect;
