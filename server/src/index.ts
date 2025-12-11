@@ -20,7 +20,7 @@ import { config } from "./config.js";
 import postgres from "postgres";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { handlerCreateChessGame } from "./chess/chessHandler.js";
+import { handlerCreateChessGame, handlerGetChessGame, handlerMakeChessMove } from "./chess/chessHandler.js";
 
 const migrationClient = postgres(config.db.url, { max: 1 });
 await migrate(drizzle(migrationClient), config.db.migrationConfig);
@@ -42,6 +42,8 @@ app.post("/api/refresh", handlerRefresh); // bearer/refresh-token aus db wird ve
 app.post("/api/revoke", handlerRevoke); // refresh-Token in db wird schlecht gesetzt /ungültig
 app.post("/admin/reset", handlerReset);  // löscht user-db, wenn man "dev" ist (config.platform)
 app.post("/api/chess/games", handlerCreateChessGame); // startet ein neues chess.js Spiel
+app.get("/api/chess/game/:id", handlerGetChessGame); // gibt den Zustand eines Spiels zurück
+app.post("/api/chess/games/:id/moves", handlerMakeChessMove); // macht einen Zug im Spiel
 // app.post("/api/chirps", handlerCreateChirp); // neuen chirp nach richtlinien in db eintragen
 // app.post("/api/polka/webhooks", handlerPolkaWebhooks); // upgrade zu premium durch polka-bezahldienst
 // app.get("/api/chirps", handlerListChirps); // Listet alle chirps
