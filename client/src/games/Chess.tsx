@@ -1,8 +1,151 @@
+import { useEffect, useRef, useState } from 'react'
+import $ from 'jquery'
+import '@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css'
+import { useAuth } from '../auth'
+
+type GameState = {
+  id: string
+  fen: string
+  status: string
+  turn: 'w' | 'b'
+  players: { white: string; black: string }
+  moves: string[]
+}
+
+type CreatePayload = {
+  opponentType: 'computer' | 'human'
+  playerColor: 'white' | 'black' | 'random'
+}
+
 function Chess() {
+  const { auth } = useAuth()
+  const [game, setGame] = useState<GameState | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [form, setForm] = useState<CreatePayload>({ opponentType: 'computer', playerColor: 'white' })
+  const boardRef = useRef<HTMLDivElement | null>(null)
+  const boardInstance = useRef<any>(null)
+
+  useEffect(() => {
+    // chessboard.js needs jQuery on window
+    ;(window as any).jQuery = $
+    ;(window as any).$ = $
+
+    let cancelled = false
+    const setupBoard = async () => {
+      const ChessboardModule = await import('@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.js')
+      const Chessboard = (ChessboardModule as any).default ?? (window as any).Chessboard
+      if (!Chessboard || !boardRef.current || cancelled) return
+
+      boardInstance.current?.destroy?.()
+      boardInstance.current = Chessboard(boardRef.current, {
+        position: game?.fen ?? 'start',
+        draggable: false,
+      })
+    }
+
+    setupBoard()
+
+    return () => {
+      cancelled = true
+      boardInstance.current?.destroy?.()
+      boardInstance.current = null
+    }
+  }, [game?.id])
+
+  useEffect(() => {
+    if (boardInstance.current && game?.fen) {
+      boardInstance.current.position(game.fen)
+    }
+  }, [game?.fen])
+
+  const createGame = async () => {
+    if (!auth?.token) {
+      setError('Bitte zuerst einloggen.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/chess/games', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || `Fehler ${res.status}`)
+      }
+      const data = (await res.json()) as GameState
+      setGame(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (field: keyof CreatePayload, value: CreatePayload[keyof CreatePayload]) => {
+    setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
   return (
     <div>
-      <h1>Über uns</h1>
-      <p>Hier könntest du Infos über dein Projekt oder dein Team anzeigen.</p>
+      <h1>Schach</h1>
+      <p>Starte ein neues Spiel und sehe es auf dem Board.</p>
+
+      <div style={{ display: 'grid', gap: '1rem', maxWidth: 400, marginBottom: '1.5rem' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem' }}>Gegner</label>
+          <select
+            value={form.opponentType}
+            onChange={(e) => handleChange('opponentType', e.target.value as CreatePayload['opponentType'])}
+          >
+            <option value="computer">Computer</option>
+            <option value="human">Mensch</option>
+          </select>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem' }}>Farbe</label>
+          <select
+            value={form.playerColor}
+            onChange={(e) => handleChange('playerColor', e.target.value as CreatePayload['playerColor'])}
+          >
+            <option value="white">Weiß</option>
+            <option value="black">Schwarz</option>
+            <option value="random">Zufällig</option>
+          </select>
+        </div>
+
+        <button onClick={createGame} disabled={loading}>
+          {loading ? 'Erstelle Spiel...' : 'Neues Spiel starten'}
+        </button>
+
+        {error && <p style={{ color: 'red' }}>❌ {error}</p>}
+      </div>
+
+      <div
+        ref={boardRef}
+        style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem', border: '1px solid #ddd' }}
+      />
+
+      {game && (
+        <div style={{ fontSize: '0.95rem', color: '#444' }}>
+          <div>Spiel-ID: {game.id}</div>
+          <div>Status: {game.status}</div>
+          <div>Am Zug: {game.turn === 'w' ? 'Weiß' : 'Schwarz'}</div>
+          <div>
+            Spieler Weiß: <strong>{game.players.white}</strong>
+          </div>
+          <div>
+            Spieler Schwarz: <strong>{game.players.black}</strong>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
