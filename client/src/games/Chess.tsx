@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import $ from 'jquery'
-import '@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css'
+import { useMemo, useState } from 'react'
+import { Chessboard } from 'react-chessboard'
 import { useAuth } from '../auth'
 
 type GameState = {
@@ -17,47 +16,18 @@ type CreatePayload = {
   playerColor: 'white' | 'black' | 'random'
 }
 
+type BoardOrientation = "white" | "black" | undefined;
+
 function Chess() {
   const { auth } = useAuth()
   const [game, setGame] = useState<GameState | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState<CreatePayload>({ opponentType: 'computer', playerColor: 'white' })
-  const boardRef = useRef<HTMLDivElement | null>(null)
-  const boardInstance = useRef<any>(null)
-
-  useEffect(() => {
-    // chessboard.js needs jQuery on window
-    ;(window as any).jQuery = $
-    ;(window as any).$ = $
-
-    let cancelled = false
-    const setupBoard = async () => {
-      const ChessboardModule = await import('@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.js')
-      const Chessboard = (ChessboardModule as any).default ?? (window as any).Chessboard
-      if (!Chessboard || !boardRef.current || cancelled) return
-
-      boardInstance.current?.destroy?.()
-      boardInstance.current = Chessboard(boardRef.current, {
-        position: game?.fen ?? 'start',
-        draggable: false,
-      })
-    }
-
-    setupBoard()
-
-    return () => {
-      cancelled = true
-      boardInstance.current?.destroy?.()
-      boardInstance.current = null
-    }
-  }, [game?.id])
-
-  useEffect(() => {
-    if (boardInstance.current && game?.fen) {
-      boardInstance.current.position(game.fen)
-    }
-  }, [game?.fen])
+  const orientation = useMemo<BoardOrientation>(() => {
+    if (!game || !auth?.userId) return 'white'
+    return game.players.white === auth.userId ? 'white' : 'black'
+  }, [auth?.userId, game])
 
   const createGame = async () => {
     if (!auth?.token) {
@@ -91,6 +61,12 @@ function Chess() {
   const handleChange = (field: keyof CreatePayload, value: CreatePayload[keyof CreatePayload]) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
+
+  const chessboardOptions = {
+      position: game?.fen ?? 'start',
+      boardOrientation: orientation,
+      id: 'play-vs-random'
+    };
 
   return (
     <div>
@@ -129,9 +105,10 @@ function Chess() {
       </div>
 
       <div
-        ref={boardRef}
-        style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem', border: '1px solid #ddd' }}
-      />
+        style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem' }}
+      >
+        <Chessboard options={chessboardOptions} />
+      </div>
 
       {game && (
         <div style={{ fontSize: '0.95rem', color: '#444' }}>
