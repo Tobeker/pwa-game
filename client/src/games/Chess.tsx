@@ -16,7 +16,8 @@ type CreatePayload = {
   playerColor: 'white' | 'black' | 'random'
 }
 
-type BoardOrientation = "white" | "black" | undefined;
+type BoardOrientation = 'white' | 'black'
+const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 function Chess() {
   const { auth } = useAuth()
@@ -28,6 +29,16 @@ function Chess() {
     if (!game || !auth?.userId) return 'white'
     return game.players.white === auth.userId ? 'white' : 'black'
   }, [auth?.userId, game])
+  const boardOptions = useMemo(
+    () => ({
+      id: 'play-board',
+      position: game?.fen ?? START_FEN,
+      boardOrientation: orientation,
+      allowDragging: false,
+      boardStyle: { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
+    }),
+    [game?.fen, orientation],
+  )
 
   const createGame = async () => {
     if (!auth?.token) {
@@ -61,12 +72,6 @@ function Chess() {
   const handleChange = (field: keyof CreatePayload, value: CreatePayload[keyof CreatePayload]) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
-
-  const chessboardOptions = {
-      position: game?.fen ?? 'start',
-      boardOrientation: orientation,
-      id: 'play-vs-random'
-    };
 
   return (
     <div>
@@ -104,10 +109,8 @@ function Chess() {
         {error && <p style={{ color: 'red' }}>❌ {error}</p>}
       </div>
 
-      <div
-        style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem' }}
-      >
-        <Chessboard options={chessboardOptions} />
+      <div style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem' }}>
+        <Chessboard options={boardOptions} />
       </div>
 
       {game && (
