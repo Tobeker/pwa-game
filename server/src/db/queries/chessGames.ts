@@ -1,6 +1,6 @@
 import { db } from "../index.js";
 import { chess, type NewChess, type Chess } from "../schema.js";
-import { eq } from "drizzle-orm";
+import { eq, sql, or } from "drizzle-orm";
 
 export async function insertChessGame(values: NewChess): Promise<Chess> {
   const [row] = await db.insert(chess).values(values).returning();
@@ -19,4 +19,17 @@ export async function updateChessGame(id: string, values: Partial<NewChess>): Pr
     .where(eq(chess.id, id))
     .returning();
   return row;
+}
+
+export async function listChessGamesForUserName(userId: string, userName: string): Promise<Chess[]> {
+  return db
+    .select()
+    .from(chess)
+    .where(
+      or(
+        eq(sql`("chess"."players"->>'white')`, userName),
+        eq(sql`("chess"."players"->>'black')`, userName),
+        eq(chess.createdBy, userId)
+      )
+    );
 }

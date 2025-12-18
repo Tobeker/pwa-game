@@ -20,6 +20,15 @@ export async function getUserByEmail(email: string): Promise<User> {
   return u;
 }
 
+export async function getUserById(id: string): Promise<User> {
+  const [u] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+  return u;
+}
+
 export async function deleteAllUsers() {
   await db.delete(users);
 }
@@ -45,4 +54,9 @@ export async function upgradeUserToChirpyRed(userId: string): Promise<User> {
     .where(eq(users.id, userId))
     .returning();
   return row;
+}
+
+export async function listUsernames(): Promise<Array<Pick<User, "id" | "email">>> {
+  const rows = await db.select({ id: users.id, email: users.email }).from(users);
+  return rows;
 }

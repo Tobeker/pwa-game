@@ -3,7 +3,7 @@ import { config } from "../config.js";
 import { hashPassword, checkPasswordHash, makeJWT, getBearerToken, validateJWT, makeRefreshToken/*, getAPIKey*/ } from "./auth.js";
 import { BadRequestError, ForbiddenError, UnauthorizedError, ConflictError } from "./errors.js";
 import { insertRefreshToken, findRefreshTokenWithUser, revokeRefreshToken } from "../db/queries/refreshTokens.js";
-import { createUser, getUserByEmail, deleteAllUsers, updateUserCredentials, upgradeUserToChirpyRed } from "../db/queries/users.js";
+import { createUser, getUserByEmail, deleteAllUsers, updateUserCredentials, upgradeUserToChirpyRed, listUsernames } from "../db/queries/users.js";
 //import { createChirp, listChirpsAscending, getChirpById, deleteChirpOwnedByUser} from "../db/queries/chirps.js";
 
 function requireEmailAndPassword(req: Request) {
@@ -227,6 +227,15 @@ export async function handlerUpdateUser(req: Request, res: Response, next: NextF
     // 4) Omit password in response
     const { hashedPassword: _hp, ...publicUser } = user;
     res.status(200).json(publicUser);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handlerListUsernames(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const users = await listUsernames();
+    res.status(200).json(users);
   } catch (err) {
     next(err);
   }

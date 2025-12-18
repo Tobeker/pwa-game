@@ -4,7 +4,8 @@ import { BadRequestError } from "../api/errors.js";
 import { config } from "../config.js";
 import { getBearerToken, validateJWT } from "../api/auth.js";
 import type { CreateGameRequest } from "./chessTypes.js";
-import { getChessGameById, insertChessGame, updateChessGame } from "../db/queries/chessGames.js";
+import { getChessGameById, insertChessGame, updateChessGame, listChessGamesForUserName } from "../db/queries/chessGames.js";
+import { getUserById } from "../db/queries/users.js";
 
 const opponentTypes = ["computer", "human"] as const;
 const playerColors = ["white", "black", "random"] as const;
@@ -44,10 +45,12 @@ export async function handlerCreateChessGame(req: Request, res: Response, next: 
     const body = assertCreateGameBody(req.body);
     const token = getBearerToken(req);
     const userId = validateJWT(token, config.api.jwtSecret);
+    const user = await getUserById(userId);
+    const userName = user?.email ?? "unknown";
 
-    const game = createGame({ userId, opponentType: body.opponentType, playerColor: body.playerColor });
+    const game = createGame({ userId, userName, opponentType: body.opponentType, playerColor: body.playerColor });
 
-    const userColor = game.players.white === userId ? "white" : "black";
+    const userColor = game.players.white === userName ? "white" : "black";
     await insertChessGame({
       id: game.id,
       fen: game.fen,
@@ -70,6 +73,8 @@ export async function handlerMakeChessMove(req: Request, res: Response, next: Ne
   try {
     const token = getBearerToken(req);
     const userId = validateJWT(token, config.api.jwtSecret);
+    const user = await getUserById(userId);
+    const userName = user?.email ?? "unknown";
     const id = String(req.params.id || "");
     if (!id) {
       throw new BadRequestError("Missing game id");
@@ -85,7 +90,7 @@ export async function handlerMakeChessMove(req: Request, res: Response, next: Ne
       game = loadGameFromRow(row);
     }
 
-    if (game.players.white !== userId && game.players.black !== userId) {
+    if (game.players.white !== userName && game.players.black !== userName) {
       return res.status(403).json({ error: "Not a participant of this game" });
     }
 
@@ -136,6 +141,19 @@ export async function handlerGetChessGame(req: Request, res: Response, next: Nex
       players: row.players,
       moves: row.moves,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function handlerListChessGames(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = getBearerToken(req);
+    const userId = validateJWT(token, config.api.jwtSecret);
+    const user = await getUserById(userId);
+    const userName = user?.email ?? "unknown";
+    const rows = await listChessGamesForUserName(userId, userName);
+    res.status(200).json(rows);
   } catch (err) {
     next(err);
   }
