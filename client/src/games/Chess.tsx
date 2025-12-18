@@ -194,6 +194,13 @@ function Chess() {
         </div>
       )}
 
+      {game && (
+        <div style={{ marginBottom: '0.75rem', padding: '0.75rem', border: '1px solid #ddd', borderRadius: 4 }}>
+          <div><strong>Aktuelles Spiel:</strong> {game.id}</div>
+          <div><strong>Am Zug:</strong> {game.turn === 'w' ? 'Weiß' : 'Schwarz'}</div>
+        </div>
+      )}
+
       <div style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem' }}>
         <Chessboard options={boardOptions} />
       </div>

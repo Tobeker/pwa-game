@@ -13,18 +13,18 @@ function pickColor(requested: PlayerColor): "white" | "black" {
   return requested;
 }
 
-function buildPlayers(userName: string, opponentType: OpponentType, color: "white" | "black"): PlayerMap {
-  const opponentName = opponentType === "computer" ? "computer" : "human";
+function buildPlayers(userName: string, opponentType: OpponentType, color: "white" | "black", opponentName?: string): PlayerMap {
+  const opponentDisplay = opponentType === "computer" ? "computer" : opponentName || "human";
   return color === "white"
-    ? { white: userName, black: opponentName }
-    : { white: opponentName, black: userName };
+    ? { white: userName, black: opponentDisplay }
+    : { white: opponentDisplay, black: userName };
 }
 
 export function createGame(params: { userId: string; userName: string } & CreateGameRequest): ChessGame {
   const color = pickColor(params.playerColor);
   const id = `game_${randomUUID()}`;
   const chess = new Chess(); // start position
-  const players = buildPlayers(params.userName, params.opponentType, color);
+  const players = buildPlayers(params.userName, params.opponentType, color, params.opponentName);
 
   games.set(id, chess);
   gameMetadata.set(id, { players });

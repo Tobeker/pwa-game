@@ -6,6 +6,7 @@ export type Turn = "w" | "b";
 export type CreateGameRequest = {
   opponentType: OpponentType;
   playerColor: PlayerColor;
+  opponentName?: string;
 };
 
 export type PlayerMap = {

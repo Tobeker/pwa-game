@@ -14,14 +14,17 @@ function assertCreateGameBody(body: unknown): CreateGameRequest {
   if (typeof body !== "object" || body === null) {
     throw new BadRequestError("Invalid body");
   }
-  const { opponentType, playerColor } = body as Partial<CreateGameRequest>;
-  /* if (!opponentTypes.includes(opponentType as any)) {
+  const { opponentType, playerColor, opponentName } = body as CreateGameRequest;
+  if (!opponentTypes.includes(opponentType as any)) {
     throw new BadRequestError(`Invalid opponentType: expected ${opponentTypes.join(" | ")}`);
   }
   if (!playerColors.includes(playerColor as any)) {
     throw new BadRequestError(`Invalid playerColor: expected ${playerColors.join(" | ")}`);
-  }*/
-  return { opponentType: opponentType as any, playerColor: playerColor as any };
+  }
+  if (opponentType === "human" && (typeof opponentName !== "string" || opponentName.trim() === "")) {
+    throw new BadRequestError("Invalid opponentName");
+  }
+  return { opponentType, playerColor, opponentName };
 }
 
 type MoveBody = { from: string; to: string; promotion?: string };
@@ -48,7 +51,7 @@ export async function handlerCreateChessGame(req: Request, res: Response, next: 
     const user = await getUserById(userId);
     const userName = user?.email ?? "unknown";
 
-    const game = createGame({ userId, userName, opponentType: body.opponentType, playerColor: body.playerColor });
+    const game = createGame({ userId, userName, opponentType: body.opponentType, playerColor: body.playerColor, opponentName: body.opponentName });
 
     const userColor = game.players.white === userName ? "white" : "black";
     await insertChessGame({
