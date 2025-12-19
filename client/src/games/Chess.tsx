@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Chessboard } from 'react-chessboard'
+import { useCallback, useMemo, useState } from 'react'
+import { Chessboard, PieceDropHandlerArgs } from 'react-chessboard'
 import { useAuth } from '../auth'
 import { useEffect } from 'react'
 
@@ -29,19 +29,62 @@ function Chess() {
   const [form, setForm] = useState<CreatePayload>({ opponentType: 'computer', playerColor: 'white' })
   const [users, setUsers] = useState<Array<{ id: string; email: string }>>([])
   const [games, setGames] = useState<GameState[]>([])
+  const [movePending, setMovePending] = useState(false)
   const orientation = useMemo<BoardOrientation>(() => {
     if (!game || !auth?.userId) return 'white'
     return game.players.white === auth.userId ? 'white' : 'black'
   }, [auth?.userId, game])
+  const handlePieceDrop = useCallback(
+    ({ piece, sourceSquare, targetSquare }: PieceDropHandlerArgs) => {
+      if (!game?.id || !auth?.token || !targetSquare) return false
+      setMovePending(true)
+      setError(null)
+      ;(async () => {
+        try {
+          const res = await fetch(`/api/chess/games/${game.id}/moves`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.token}`,
+            },
+            body: JSON.stringify({ from: sourceSquare, to: targetSquare, piece }),
+          })
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}))
+            setError(data.error || `Zug ungültig (${res.status})`)
+            return
+          }
+          const data = (await res.json()) as GameState
+          setGame(data)
+          setGames((prev) => {
+            const idx = prev.findIndex((g) => g.id === data.id)
+            if (idx === -1) return [data, ...prev]
+            const copy = [...prev]
+            copy[idx] = data
+            return copy
+          })
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Unbekannter Fehler')
+        } finally {
+          setMovePending(false)
+        }
+      })()
+      // react-chessboard expects a boolean return synchronously
+      return true
+    },
+    [auth?.token, game?.id],
+  )
+
   const boardOptions = useMemo(
     () => ({
       id: 'play-board',
       position: game?.fen ?? START_FEN,
       boardOrientation: orientation,
-      allowDragging: false,
+      allowDragging: !!game && !movePending,
+      onPieceDrop: handlePieceDrop,
       boardStyle: { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
     }),
-    [game?.fen, orientation],
+    [game?.fen, orientation, handlePieceDrop, game, movePending],
   )
 
   const loadGame = async (id: string) => {
@@ -116,6 +159,7 @@ function Chess() {
       }
       const data = (await res.json()) as GameState
       setGame(data)
+      setGames((prev) => (prev.some((g) => g.id === data.id) ? prev : [data, ...prev]))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler')
     } finally {
