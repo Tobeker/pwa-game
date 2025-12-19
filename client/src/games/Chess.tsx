@@ -235,6 +235,11 @@ function Chess() {
               </option>
             ))}
           </select>
+          {game && (
+            <button style={{ marginTop: '0.5rem' }} onClick={() => loadGame(game.id)}>
+              Spiel aktualisieren
+            </button>
+          )}
         </div>
       )}
 
