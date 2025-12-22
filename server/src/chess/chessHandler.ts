@@ -9,6 +9,7 @@ import { getUserById } from "../db/queries/users.js";
 
 const opponentTypes = ["computer", "human"] as const;
 const playerColors = ["white", "black", "random"] as const;
+const promotionPieces = ["q", "r", "b", "n"] as const;
 
 function assertCreateGameBody(body: unknown): CreateGameRequest {
   if (typeof body !== "object" || body === null) {
@@ -37,8 +38,10 @@ function assertMoveBody(body: unknown): MoveBody {
   if (typeof from !== "string" || typeof to !== "string") {
     throw new BadRequestError("Missing or invalid move coordinates");
   }
-  if (promotion !== undefined && typeof promotion !== "string") {
-    throw new BadRequestError("Invalid promotion value");
+  if (promotion !== undefined) {
+    if (typeof promotion !== "string" || !promotionPieces.includes(promotion as any)) {
+      throw new BadRequestError(`Invalid promotion value`);
+    }
   }
   return { from, to, promotion };
 }
@@ -97,7 +100,12 @@ export async function handlerMakeChessMove(req: Request, res: Response, next: Ne
       return res.status(403).json({ error: "Not a participant of this game" });
     }
 
-    const updated = applyMoveToGame(id, move);
+    let updated;
+    try {
+      updated = applyMoveToGame(id, move);
+    } catch (err) {
+      return next(new BadRequestError("Illegal move"));
+    }
     if (!updated) {
       throw new BadRequestError("Illegal move");
     }

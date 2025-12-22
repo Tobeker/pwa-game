@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Chessboard, PieceDropHandlerArgs } from 'react-chessboard'
+import { Chessboard, PieceDropHandlerArgs, DraggingPieceDataType } from 'react-chessboard'
 import { useAuth } from '../auth'
 import { useEffect } from 'react'
 
@@ -30,16 +30,21 @@ function Chess() {
   const [users, setUsers] = useState<Array<{ id: string; email: string }>>([])
   const [games, setGames] = useState<GameState[]>([])
   const [movePending, setMovePending] = useState(false)
+  const [promotionRequest, setPromotionRequest] = useState<{ from: string; to: string; color: 'white' | 'black' } | null>(null)
   const orientation = useMemo<BoardOrientation>(() => {
     if (!game || !auth?.userId) return 'white'
     return game.players.white === auth.userId ? 'white' : 'black'
   }, [auth?.userId, game])
   const handlePieceDrop = useCallback(
     ({ piece, sourceSquare, targetSquare }: PieceDropHandlerArgs) => {
-      if (!game?.id || !auth?.token || !targetSquare) return false
-      setMovePending(true)
-      setError(null)
-      ;(async () => {
+      if (!game?.id || !auth?.token || !targetSquare || promotionRequest) return false
+      const isPromotion =
+        (piece.pieceType.toLowerCase() === 'wp' && targetSquare.endsWith('8')) ||
+        (piece.pieceType.toLowerCase() === 'bp' && targetSquare.endsWith('1'))
+
+      const submitMove = async (promotion?: 'q' | 'n') => {
+        setMovePending(true)
+        setError(null)
         try {
           const res = await fetch(`/api/chess/games/${game.id}/moves`, {
             method: 'POST',
@@ -47,7 +52,7 @@ function Chess() {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${auth.token}`,
             },
-            body: JSON.stringify({ from: sourceSquare, to: targetSquare, piece }),
+            body: JSON.stringify({ from: sourceSquare, to: targetSquare, promotion }),
           })
           if (!res.ok) {
             const data = await res.json().catch(() => ({}))
@@ -68,11 +73,20 @@ function Chess() {
         } finally {
           setMovePending(false)
         }
-      })()
+      }
+
+      if (isPromotion) {
+        const color = piece.pieceType.startsWith('w') ? 'white' : 'black'
+        setMovePending(true)
+        setPromotionRequest({ from: sourceSquare, to: targetSquare, color })
+        return false
+      }
+
+      submitMove()
       // react-chessboard expects a boolean return synchronously
       return true
     },
-    [auth?.token, game?.id],
+    [auth?.token, game?.id, promotionRequest],
   )
 
   const boardOptions = useMemo(
@@ -80,12 +94,47 @@ function Chess() {
       id: 'play-board',
       position: game?.fen ?? START_FEN,
       boardOrientation: orientation,
-      allowDragging: !!game && !movePending,
+      allowDragging: !!game && !movePending && !promotionRequest,
       onPieceDrop: handlePieceDrop,
       boardStyle: { boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
     }),
-    [game?.fen, orientation, handlePieceDrop, game, movePending],
+    [game?.fen, orientation, handlePieceDrop, game, movePending, promotionRequest],
   )
+
+  const submitPromotion = async (promotion: 'q' | 'n') => {
+    if (!promotionRequest || !auth?.token || !game?.id) return
+    setMovePending(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/chess/games/${game.id}/moves`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ from: promotionRequest.from, to: promotionRequest.to, promotion }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || `Zug ungültig (${res.status})`)
+        return
+      }
+      const data = (await res.json()) as GameState
+      setGame(data)
+      setGames((prev) => {
+        const idx = prev.findIndex((g) => g.id === data.id)
+        if (idx === -1) return [data, ...prev]
+        const copy = [...prev]
+        copy[idx] = data
+        return copy
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler')
+    } finally {
+      setMovePending(false)
+      setPromotionRequest(null)
+    }
+  }
 
   const loadGame = async (id: string) => {
     if (!auth?.token) return
@@ -253,6 +302,22 @@ function Chess() {
       <div style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem' }}>
         <Chessboard options={boardOptions} />
       </div>
+
+      {promotionRequest && (
+        <div style={{ marginBottom: '1rem', padding: '0.75rem', border: '1px solid #ddd', borderRadius: 4 }}>
+          <div style={{ marginBottom: '0.5rem' }}>
+            Bauer erreicht Grundlinie. Wandle um zu:
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={() => submitPromotion('q')}>
+              Dame
+            </button>
+            <button onClick={() => submitPromotion('n')}>
+              Springer
+            </button>
+          </div>
+        </div>
+      )}
 
       {game && (
         <div style={{ fontSize: '0.95rem', color: '#444' }}>

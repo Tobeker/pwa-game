@@ -87,8 +87,12 @@ export function applyMoveToGame(id: string, move: { from: string; to: string; pr
   const meta = gameMetadata.get(id);
   if (!chess || !meta) return null;
 
-  const result = chess.move({ from: move.from, to: move.to, promotion: move.promotion });
-  if (!result) {
+  try {
+    const result = chess.move({ from: move.from, to: move.to, promotion: move.promotion });
+    if (!result) {
+      return null;
+    }
+  } catch (_err) {
     return null;
   }
 
