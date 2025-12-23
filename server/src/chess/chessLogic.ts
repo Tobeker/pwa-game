@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { nanoid } from "nanoid";
 import { Chess } from "chess.js";
 import type { ChessGame, CreateGameRequest, GameStatus, OpponentType, PlayerColor, PlayerMap } from "./chessTypes.js";
 import type { Chess as ChessRow } from "../db/schema.js";
@@ -22,7 +22,7 @@ function buildPlayers(userName: string, opponentType: OpponentType, color: "whit
 
 export function createGame(params: { userId: string; userName: string } & CreateGameRequest): ChessGame {
   const color = pickColor(params.playerColor);
-  const id = `game_${randomUUID()}`;
+  const id = nanoid(8);
   const chess = new Chess(); // start position
   const players = buildPlayers(params.userName, params.opponentType, color, params.opponentName);
 
