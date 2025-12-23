@@ -5,22 +5,20 @@ import { RequireAuth, useAuth } from './auth'
 
 function App() {
   const { auth, setAuth } = useAuth()
-
-  const handleLogout = () => {
-    setAuth(null)
-  }
+  const handleLogout = () => setAuth(null)
 
   return (
     <div>
       {/* Navigation */}
       <nav style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>
         <Link to="/" style={{ marginRight: '1rem' }}>Startseite</Link>
-        <Link to="/chess" style={{ marginRight: '1rem' }}>Schach</Link>
-        {auth?.name && (
-          <span style={{ marginRight: '1rem', color: '#555' }}>Eingeloggt als {auth.name}</span>
-        )}
+        <span style={{ color: '#555' }}>
+          Status: {auth ? `angemeldet (${auth.name ?? auth.email ?? 'unbekannt'})` : 'abgemeldet'}
+        </span>
         {auth && (
-          <button onClick={handleLogout}>Abmelden</button>
+          <button style={{ marginLeft: '1rem' }} onClick={handleLogout}>
+            Abmelden
+          </button>
         )}
       </nav>
 

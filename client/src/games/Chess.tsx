@@ -31,6 +31,7 @@ function Chess() {
   const [games, setGames] = useState<GameState[]>([])
   const [movePending, setMovePending] = useState(false)
   const [promotionRequest, setPromotionRequest] = useState<{ from: string; to: string; color: 'white' | 'black' } | null>(null)
+  const [mode, setMode] = useState<'new' | 'existing'>('new')
   const orientation = useMemo<BoardOrientation>(() => {
     if (!game || !auth?.userId) return 'white'
     return game.players.white === auth.userId ? 'white' : 'black'
@@ -225,6 +226,16 @@ function Chess() {
       <h1>Schach</h1>
       <p>Starte ein neues Spiel und sehe es auf dem Board.</p>
 
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <button type="button" onClick={() => setMode('new')} disabled={mode === 'new'}>
+          Neues Spiel
+        </button>
+        <button type="button" onClick={() => setMode('existing')} disabled={mode === 'existing'}>
+          Bestehendes Spiel
+        </button>
+      </div>
+
+      {mode === 'new' && (
       <div style={{ display: 'grid', gap: '1rem', maxWidth: 400, marginBottom: '1.5rem' }}>
         <div>
           <label style={{ display: 'block', marginBottom: '0.25rem' }}>Gegner</label>
@@ -272,9 +283,10 @@ function Chess() {
 
         {error && <p style={{ color: 'red' }}>❌ {error}</p>}
       </div>
+      )}
 
-      {games.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
+      {mode === 'existing' && games.length > 0 && (
+        <div style={{ marginBottom: '1rem', maxWidth: 400 }}>
           <label style={{ display: 'block', marginBottom: '0.25rem' }}>Bestehende Spiele</label>
           <select value={game?.id ?? ''} onChange={(e) => loadGame(e.target.value)}>
             <option value="">-- Spiel auswählen --</option>
@@ -289,15 +301,19 @@ function Chess() {
               Spiel aktualisieren
             </button>
           )}
+          {error && <p style={{ color: 'red' }}>❌ {error}</p>}
         </div>
       )}
+      {mode === 'existing' && games.length === 0 && (
+        <p style={{ marginBottom: '1rem' }}>Keine gespeicherten Spiele gefunden. Starte ein neues.</p>
+      )}
 
-      {game && (
+      {/*game && (
         <div style={{ marginBottom: '0.75rem', padding: '0.75rem', border: '1px solid #ddd', borderRadius: 4 }}>
           <div><strong>Aktuelles Spiel:</strong> {game.id}</div>
           <div><strong>Am Zug:</strong> {game.turn === 'w' ? 'Weiß' : 'Schwarz'}</div>
         </div>
-      )}
+      )*/}
 
       <div style={{ width: '400px', maxWidth: '90vw', marginBottom: '1rem' }}>
         <Chessboard options={boardOptions} />
@@ -320,8 +336,8 @@ function Chess() {
       )}
 
       {game && (
-        <div style={{ fontSize: '0.95rem', color: '#444' }}>
-          <div>Spiel-ID: {game.id}</div>
+        <div style={{ fontSize: '0.95rem' }}>
+          {/*<div>Spiel-ID: {game.id}</div>*/}
           <div>Status: {game.status}</div>
           <div>Am Zug: {game.turn === 'w' ? 'Weiß' : 'Schwarz'}</div>
           <div>
