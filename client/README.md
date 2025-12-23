@@ -1,75 +1,34 @@
-# React + TypeScript + Vite
+# PWA Game – Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite frontend for the chess webapp. Users can register/login, start chess games, continue existing ones, and play via drag & drop with promotion support.
 
-Currently, two official plugins are available:
+## Commands
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Install deps: `npm install`
+- Dev server: `npm run dev` (default at http://localhost:5173)
+- Build: `npm run build`
+- Preview build: `npm run preview`
 
-## React Compiler
+## Environment & API
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- The dev server proxies `/api` to the backend (`server` runs on http://localhost:8080 by default). Make sure the backend is running.
+- Auth uses the existing `/api/users` (register) and `/api/login` endpoints. Tokens are stored in localStorage.
+- Chess routes used:
+  - `POST /api/chess/games` (create)
+  - `GET /api/chess/game/:id` (load state)
+  - `POST /api/chess/games/:id/moves` (make move, includes promotions)
+  - `GET /api/chessgames` (list user games)
+  - `GET /api/usernames` (list players for human opponent selection)
 
-Note: This will impact Vite dev & build performances.
+## App Structure
 
-## Expanding the ESLint configuration
+- `src/main.tsx` – bootstraps React/Router/AuthProvider.
+- `src/App.tsx` – routes and nav (status + logout).
+- `src/games/HomePage.tsx` – landing: login/register toggle when logged out; “Zum Schachspiel” button when logged in.
+- `src/games/Chess.tsx` – chess UI: start new game or load existing, drag pieces, handle promotions, show game info.
+- `src/auth.tsx` – auth context/localStorage.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Notes
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- Promotion prompt appears when a pawn reaches the last rank; choose a piece to submit the move.
+- If API requests fail (e.g., backend down), errors are shown inline; check browser console for details.

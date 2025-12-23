@@ -1,6 +1,6 @@
-Chirpy Server
+Chess Server
 
-A tiny Twitter-ish backend built with Express, TypeScript, Postgres + Drizzle ORM, and JWT auth. It lets you create users, log in, post/read/delete chirps, and manage sessions with access + refresh tokens. There’s also basic metrics, error handling, and a simple webhook to “upgrade” users to Chirpy Red.
+A tiny Games backend built with Express, TypeScript, Postgres + Drizzle ORM, and JWT auth. It lets you create users, log in, manage sessions with access + refresh tokens and handles Games. There’s also basic metrics and error handling.
 
 What this project does
 
@@ -10,19 +10,19 @@ Create account (POST /api/users) with bcrypt-hashed password
 
 Log in (POST /api/login) → returns JWT access token (1h) + refresh token (60 days)
 
-Update own email/password (PUT /api/users) — auth required
+Get all Usernames (GET /api/usernames) — auth required
 
 Optional admin/dev reset & simple metrics page
 
-Chirps
+Chess
 
-Create (POST /api/chirps) — auth required, validates body (≤ 140 chars)
+Start new Chessgame (POST /api/chess/games) with chess.js and db
 
-List (GET /api/chirps)
+Get the Gamestate (GET /api/chess/game/:id)
 
-Get by id (GET /api/chirps/:chirpID)
+Do a Chess-move (POST /api/chess/games/:id/moves)
 
-Delete own chirp (DELETE /api/chirps/:chirpID) — owner-only
+Get all Games of a specific User (GET /api/chessgames)
 
 Auth/session
 
@@ -34,19 +34,6 @@ Refresh access token: POST /api/refresh (via Authorization: Bearer <refreshToken
 
 Revoke refresh token: POST /api/revoke
 
-Billing/Webhooks (simulated)
-
-POST /api/polka/webhooks — handles event: "user.upgraded" and sets is_chirpy_red=true
-
-Quality of life
-
-Middleware that logs non-OK responses
-
-Metrics counter for /app static hits and /admin/metrics HTML
-
-Centralized error handler with custom error classes
-
-Vitest unit tests (e.g., for bearer token parsing)
 
 Why someone should care
 
@@ -58,7 +45,6 @@ Session model you’ll actually use: short-lived access tokens + long-lived refr
 
 Secure defaults: hashed passwords, server-side token revocation, minimal error leakage.
 
-Extensible: add scopes/roles, rate limits, pagination, or swap Postgres for another SQL DB supported by Drizzle.
 
 Install & run
 1) Prerequisites
@@ -102,7 +88,7 @@ This project loads env via dotenv and reads values in src/config.ts.
 
 4) Database schema & migrations
 
-If you’re using drizzle-kit:
+Using drizzle-kit:
 
 # Generate migrations from your schema (optional if already checked in)
 npx drizzle-kit generate
@@ -112,9 +98,9 @@ npx drizzle-kit migrate
 
 Key tables:
 
-users (includes hashed_password and is_chirpy_red boolean default false)
+users (includes hashed_password)
 
-chirps (FK → users, ON DELETE CASCADE)
+chess (FK → users, ON DELETE CASCADE)
 
 refresh_tokens (token PK, expires_at, revoked_at, FK → users)
 
@@ -122,69 +108,4 @@ refresh_tokens (token PK, expires_at, revoked_at, FK → users)
 
 This project compiles TypeScript to dist/ and starts Node from there.
 
-npm run build
-npm start
-
-If your package.json has:
-
-"scripts": {
-  "build": "tsc",
-  "start": "node dist/index.js"
-}
-
-you’re good. Otherwise adjust "start" to match your compiled entry (dist/server.js vs dist/index.js).
-
-Dev tip: you can also run with a watcher (e.g., tsx, nodemon, or ts-node-dev) if you prefer.
-
-6) Hit the endpoints
-
-Create user
-
-POST /api/users
-Content-Type: application/json
-
-{ "email": "lane@example.com", "password": "04234" }
-
-Login (gets access + refresh)
-
-POST /api/login
-{ "email": "lane@example.com", "password": "04234" }
-
-Post a chirp (auth)
-
-POST /api/chirps
-Authorization: Bearer <ACCESS_TOKEN>
-{ "body": "Hello, world!" }
-
-Refresh access token
-
-POST /api/refresh
-Authorization: Bearer <REFRESH_TOKEN>
-
-Revoke refresh token
-
-POST /api/revoke
-Authorization: Bearer <REFRESH_TOKEN>
-
-Upgrade via webhook (simulated)
-
-POST /api/polka/webhooks
-{ "event": "user.upgraded", "data": { "userId": "<uuid>" } }
-
-7) Tests (Vitest)
-
-# run all tests
-npx vitest
-# or if you have a script:
-npm test
-
-Troubleshooting
-
-“Cannot find module 'src/…'”
-Use relative imports with .js extensions in TypeScript (ESM, no bundler). Example: import { config } from "../config.js".
-
-Server won’t start after build
-Ensure npm run build emits dist/… and "start" points to the correct file.
-
-401s on protected routes
-Send Authorization: Bearer <accessToken> (for chirps & update user) or <refreshToken> (for refresh/revoke).
+npm run dev
