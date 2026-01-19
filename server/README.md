@@ -36,14 +36,14 @@ A tiny Chess backend built with Express, TypeScript, Postgres + Drizzle ORM, and
 Node 18+ (ESM compatible)
 - npm install
 
-Postgres running locally or in the cloud
-- sudo apt install postgresql postgresql-contrib
-- sudo passwd [password] to update system-password
-- sudo service postgresql start, to start db-server
-- sudo -u postgres psql, to enter the db-client
-- CREATE DATABASE [name];, to create db
-- \c [name], to connect
-- ALTER USER postgres PASSWORD '[password]';, to set db-password
+Postgres running locally or in the cloud:
+- `sudo apt install postgresql postgresql-contrib`
+- `sudo passwd [password]` to update system-password
+- `sudo service postgresql start`, to start db-server
+- `sudo -u postgres psql`, to enter the db-client
+- `CREATE DATABASE [name];`, to create db
+- `\c [name]`, to connect
+- `ALTER USER postgres PASSWORD '[password]';`, to set db-password
 
 2) Clone & install
 
@@ -65,14 +65,13 @@ This project loads env via dotenv and reads values in src/config.ts.
 
 Using drizzle-kit:
 
-// Generate migrations from your schema (optional if already checked in)
+Generate migrations from your schema (optional if already checked in):
 - npx drizzle-kit generate
 
-// Apply migrations
+Apply migrations:
 - npx drizzle-kit migrate
 
 Key tables:
-
 - users (includes hashed_password)
 - chess (FK → users, ON DELETE CASCADE)
 - refresh_tokens (token PK, expires_at, revoked_at, FK → users)
@@ -80,5 +79,4 @@ Key tables:
 5) Build & run
 
 This project compiles TypeScript to dist/ and starts Node from there.
-
 - npm run dev
