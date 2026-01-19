@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { applyMoveToGame, createGame, getGameState, loadGameFromRow } from "./chessLogic.js";
+import { applyMoveAndMaybeComputer, createGame, getGameState, loadGameFromRow } from "./chessLogic.js";
 import { BadRequestError } from "../api/errors.js";
 import { config } from "../config.js";
 import { getBearerToken, validateJWT } from "../api/auth.js";
@@ -102,8 +102,8 @@ export async function handlerMakeChessMove(req: Request, res: Response, next: Ne
 
     let updated;
     try {
-      updated = applyMoveToGame(id, move);
-    } catch (err) {
+      updated = applyMoveAndMaybeComputer(id, move);
+    } catch (_err) {
       return next(new BadRequestError("Illegal move"));
     }
     if (!updated) {

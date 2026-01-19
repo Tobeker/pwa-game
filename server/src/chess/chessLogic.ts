@@ -4,7 +4,7 @@ import type { ChessGame, CreateGameRequest, GameStatus, OpponentType, PlayerColo
 import type { Chess as ChessRow } from "../db/schema.js";
 
 const games = new Map<string, Chess>();
-const gameMetadata = new Map<string, { players: PlayerMap }>();
+const gameMetadata = new Map<string, { players: PlayerMap; opponentType: OpponentType }>();
 
 function pickColor(requested: PlayerColor): "white" | "black" {
   if (requested === "random") {
@@ -27,7 +27,7 @@ export function createGame(params: { userId: string; userName: string } & Create
   const players = buildPlayers(params.userName, params.opponentType, color, params.opponentName);
 
   games.set(id, chess);
-  gameMetadata.set(id, { players });
+  gameMetadata.set(id, { players, opponentType: params.opponentType });
 
   return {
     id,
@@ -70,7 +70,7 @@ export function loadGameFromRow(row: ChessRow): ChessGame {
     }
   }
   games.set(row.id, chess);
-  gameMetadata.set(row.id, { players: row.players as PlayerMap });
+  gameMetadata.set(row.id, { players: row.players as PlayerMap, opponentType: row.opponentType as OpponentType });
 
   return {
     id: row.id,
@@ -94,6 +94,50 @@ export function applyMoveToGame(id: string, move: { from: string; to: string; pr
     }
   } catch (_err) {
     return null;
+  }
+
+  return {
+    id,
+    fen: chess.fen(),
+    status: statusFromChess(chess),
+    turn: chess.turn(),
+    players: meta.players,
+    moves: chess.history(),
+  };
+}
+
+function getComputerColor(players: PlayerMap): "white" | "black" | null {
+  if (players.white === "computer") return "white";
+  if (players.black === "computer") return "black";
+  return null;
+}
+
+export function applyMoveAndMaybeComputer(id: string, move: { from: string; to: string; promotion?: string }): ChessGame | null {
+  const chess = games.get(id);
+  const meta = gameMetadata.get(id);
+  if (!chess || !meta) return null;
+
+  try {
+    const applied = chess.move({ from: move.from, to: move.to, promotion: move.promotion });
+    if (!applied) {
+      return null;
+    }
+  } catch (_err) {
+    return null;
+  }
+
+  const statusAfterPlayer = statusFromChess(chess);
+  const computerColor = meta.opponentType === "computer" ? getComputerColor(meta.players) : null;
+  if (statusAfterPlayer === "ongoing" && computerColor && chess.turn() === (computerColor === "white" ? "w" : "b")) {
+    const legal = chess.moves({ verbose: true });
+    if (legal.length > 0) {
+      const choice = legal[Math.floor(Math.random() * legal.length)];
+      try {
+        chess.move(choice);
+      } catch (_err) {
+        // ignore if random move fails
+      }
+    }
   }
 
   return {
