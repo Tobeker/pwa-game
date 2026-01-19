@@ -34,22 +34,22 @@ A tiny Chess backend built with Express, TypeScript, Postgres + Drizzle ORM, and
 1) Prerequisites
 
 Node 18+ (ESM compatible)
--> npm install
+- npm install
 
 Postgres running locally or in the cloud
--> sudo apt install postgresql postgresql-contrib
--> sudo passwd [password] to update system-password
--> sudo service postgresql start, to start db-server
--> sudo -u postgres psql, to enter the db-client
--> CREATE DATABASE [name];, to create db
--> \c [name], to connect
--> ALTER USER postgres PASSWORD '[password]';, to set db-password
+- sudo apt install postgresql postgresql-contrib
+- sudo passwd [password] to update system-password
+- sudo service postgresql start, to start db-server
+- sudo -u postgres psql, to enter the db-client
+- CREATE DATABASE [name];, to create db
+- \c [name], to connect
+- ALTER USER postgres PASSWORD '[password]';, to set db-password
 
 2) Clone & install
 
-git clone <https://github.com/Tobeker/pwa-game>
-cd server
-npm install
+- git clone <https://github.com/Tobeker/pwa-game>
+- cd server
+- npm install
 
 3) Configure environment
 
@@ -66,10 +66,10 @@ This project loads env via dotenv and reads values in src/config.ts.
 Using drizzle-kit:
 
 // Generate migrations from your schema (optional if already checked in)
-npx drizzle-kit generate
+- npx drizzle-kit generate
 
 // Apply migrations
-npx drizzle-kit migrate
+- npx drizzle-kit migrate
 
 Key tables:
 
@@ -81,4 +81,4 @@ Key tables:
 
 This project compiles TypeScript to dist/ and starts Node from there.
 
-npm run dev
+- npm run dev
