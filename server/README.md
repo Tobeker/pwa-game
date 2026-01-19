@@ -1,52 +1,36 @@
-Chess Server
+# Chess Server
 
-A tiny Games backend built with Express, TypeScript, Postgres + Drizzle ORM, and JWT auth. It lets you create users, log in, manage sessions with access + refresh tokens and handles Games. There’s also basic metrics and error handling.
+A tiny Chess backend built with Express, TypeScript, Postgres + Drizzle ORM, and JWT auth. It lets you create users, log in, manage sessions with access + refresh tokens and handles Games. There’s also basic metrics and error handling.
 
-What this project does
+## What this project does
 
-Users
+- Users
+    - Create account (POST /api/users) with bcrypt-hashed password
+    - Log in (POST /api/login) → returns JWT access token (1h) + refresh token (60 days)
+    - Get all Usernames (GET /api/usernames) — auth required
+    - Optional admin/dev reset & simple metrics page
 
-Create account (POST /api/users) with bcrypt-hashed password
+- Chess
+    - Start new Chessgame (POST /api/chess/games) with chess.js and db
+    - Get the Gamestate (GET /api/chess/game/:id)
+    - Do a Chess-move (POST /api/chess/games/:id/moves)
+    - Get all Games of a specific User (GET /api/chessgames)
 
-Log in (POST /api/login) → returns JWT access token (1h) + refresh token (60 days)
+- Auth/session
+    - Access tokens: JWT (iss=chirpy, sub=userId, iat, exp)
+    - Refresh tokens: stored in DB (refresh_tokens), revocable
+    - Refresh access token: POST /api/refresh (via Authorization: Bearer <refreshToken>)
+    - Revoke refresh token: POST /api/revoke
 
-Get all Usernames (GET /api/usernames) — auth required
+## Why someone should care
 
-Optional admin/dev reset & simple metrics page
-
-Chess
-
-Start new Chessgame (POST /api/chess/games) with chess.js and db
-
-Get the Gamestate (GET /api/chess/game/:id)
-
-Do a Chess-move (POST /api/chess/games/:id/moves)
-
-Get all Games of a specific User (GET /api/chessgames)
-
-Auth/session
-
-Access tokens: JWT (iss=chirpy, sub=userId, iat, exp)
-
-Refresh tokens: stored in DB (refresh_tokens), revocable
-
-Refresh access token: POST /api/refresh (via Authorization: Bearer <refreshToken>)
-
-Revoke refresh token: POST /api/revoke
+- Realistic starter for token-based auth on Node/Express with clean TypeScript and no bundler magic.
+- Drizzle ORM: strongly-typed queries & schema, easy migrations.
+- Session model you’ll actually use: short-lived access tokens + long-lived refresh tokens stored server-side.
+- Secure defaults: hashed passwords, server-side token revocation, minimal error leakage.
 
 
-Why someone should care
-
-Realistic starter for token-based auth on Node/Express with clean TypeScript and no bundler magic.
-
-Drizzle ORM: strongly-typed queries & schema, easy migrations.
-
-Session model you’ll actually use: short-lived access tokens + long-lived refresh tokens stored server-side.
-
-Secure defaults: hashed passwords, server-side token revocation, minimal error leakage.
-
-
-Install & run
+## Install & run
 1) Prerequisites
 
 Node 18+ (ESM compatible)
@@ -63,7 +47,7 @@ Postgres running locally or in the cloud
 
 2) Clone & install
 
-git clone <your-repo-url>
+git clone <https://github.com/Tobeker/pwa-game>
 cd server
 npm install
 
@@ -71,18 +55,9 @@ npm install
 
 Create a .env file in the project root:
 
-# App/platform
-PLATFORM="dev"
-
-# JWT signing secret (generate a long random string)
-# e.g. openssl rand -base64 64
-JWT_SECRET="replace-with-a-long-random-string"
-
-# Database connection (adapt to your setup)
-# Examples:
-# DATABASE_URL=postgres://user:password@localhost:5432/dbname
-# or individual PG* vars if your db bootstrap expects them
-DATABASE_URL=postgres://[user]:[password]@localhost:5432/[db-name]?sslmode=disable
+- PLATFORM="dev"
+- JWT_SECRET="replace-with-a-long-random-string"
+- DATABASE_URL=postgres://[user]:[password]@localhost:5432/[db-name]?sslmode=disable
 
 This project loads env via dotenv and reads values in src/config.ts.
 
@@ -90,19 +65,17 @@ This project loads env via dotenv and reads values in src/config.ts.
 
 Using drizzle-kit:
 
-# Generate migrations from your schema (optional if already checked in)
+// Generate migrations from your schema (optional if already checked in)
 npx drizzle-kit generate
 
-# Apply migrations
+// Apply migrations
 npx drizzle-kit migrate
 
 Key tables:
 
-users (includes hashed_password)
-
-chess (FK → users, ON DELETE CASCADE)
-
-refresh_tokens (token PK, expires_at, revoked_at, FK → users)
+- users (includes hashed_password)
+- chess (FK → users, ON DELETE CASCADE)
+- refresh_tokens (token PK, expires_at, revoked_at, FK → users)
 
 5) Build & run
 
