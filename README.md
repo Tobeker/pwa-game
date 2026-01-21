@@ -2,7 +2,7 @@
 
 ## Description
 
-Full‑stack chess web app with a React/Vite client and a Node/Express server. Users can register/login, create games, play turns via drag & drop, and continue existing games.
+Full‑stack chess web app with a React/Vite client and a Node/Express server. You can play Chess with your Friends or versus the Computer, without Advertisements. Other Games will be added over Time. Users can register/login, create Chessgames, play turns via drag & drop, and continue existing games.
 
 ## Motivation
 
